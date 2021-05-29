@@ -150,19 +150,19 @@ fig4
 
 ## year analysis
 
-edx$year = as.numeric(stri_reverse(substr(stri_reverse(edx$title), 2, 5)))
-tab_years = edx %>%
-  group_by(year) %>%
-  summarize(avg = mean(rating),
-            sds = sd(rating),
-            cv  = 100*sd(rating)/mean(rating),
-            len = length(rating))  
-
-fig5.1 = tab_years %>% ggplot(aes(x=year, y=len)) +
-  geom_line(aes(y=len, group = 1), col="black") +
-  geom_point(aes(y=len, group = 1), col="black")  +
-  labs(title="", x = "year", y = "number of movies by year")
-fig5.1
+# edx$year = as.numeric(stri_reverse(substr(stri_reverse(edx$title), 2, 5)))
+# tab_years = edx %>%
+#   group_by(year) %>%
+#   summarize(avg = mean(rating),
+#             sds = sd(rating),
+#             cv  = 100*sd(rating)/mean(rating),
+#             len = length(rating))  
+# 
+# fig5.1 = tab_years %>% ggplot(aes(x=year, y=len)) +
+#   geom_line(aes(y=len, group = 1), col="black") +
+#   geom_point(aes(y=len, group = 1), col="black")  +
+#   labs(title="", x = "year", y = "number of movies by year")
+# fig5.1
 
 edx$year = as.numeric(stri_reverse(substr(stri_reverse(edx$title), 2, 5)))
 edx = edx %>% mutate(year = ifelse(year < 1980, "< 1980", year))

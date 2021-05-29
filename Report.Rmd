@@ -238,6 +238,134 @@ Se aprecia que tanto el año como el genero cambian el promedio de la distribuci
 
 No obsante de lo anterior, primero se provarán modelos numéricos clásicos relacionados a los sistemas de recomendaciones que sólo incluyen los efectos del usuario/película dentro de la formulación. A continuación se presentan estos modelos.
 
-## 4. Modeling and models comparison
+## 4. Modeling
+
+En este trabajo nosotros abordamos los modelos mas usuales para sistemas de recomendación. Los cuales son presentados a continuación:
+$$
+\text{m}_{1}:  r_{iu} = \mu + e_{iu},
+$$
+$$
+\text{m}_{2}:  r_{iu} = \mu + b_{i} + e_{iu},
+$$
+$$
+\text{m}_{3}:  r_{iu} = \mu + b_{i} + b_{u} + e_{iu},
+$$
+$$
+\text{m}_{4}:  r_{iu} = \mu + b_{i} + b_{u} + q_{i}^{\top}p_{u} + e_{iu},
+$$
+donde $r_{iu}$ corresponde al rating de la $i$-th movie en el $u$-th user, $\mu$ es la media general, $b_{i}$ is the movie bias, $b_{u}$ is the user bias, el producto $q_{i}^{\top}p_{u}$ son vectores de parámetros que corresponden a la interacción usuarui/movie y $e_{iu}$ es el error aleatorio. 
+
+El modelo m$_{1}$ corresponde a un modelo de media global, m$_{2}$ corresponde a un modelo con movie effect, m$_{3}$ corresponds to a model with movie and user effects. Finally, m$_4$ adds the movie/user interaction to the above model.
+
+Para comparar la performance de estos modelos, nosotros utilizamos una validacion cruzada $K$-folds, con $K=10$, utilizando el package dismo. Esto nos permite comparar exactamente los mismos subsets (or folds) para cada molesto, permitiendo una comparación más justa entre los 4 modelos propuestos.
+
+Acontinuación se presenta el código para el modelo m$_{1}$, m$_{2}$, m$_{3}$ and m$_{4}$:
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+
+KF = 10
+set.seed(2020-12-31, sample.kind = "Rounding")
+
+# ratings model for global average
+
+edx$id_cv = kfold(1:NROW(edx), k = KF)
+edx_val   = numeric()
+for(u in 1:KF){
+  m1_folds = edx %>% filter(id_cv != u) %>%
+    summarise(avg = mean(rating))
+  
+  edx_test = edx %>% filter(id_cv == u)
+  edx_test = edx_test[,c("userId", "movieId", "rating", "id_cv")]
+  edx_test$pred_m1 = m1_folds
+  
+  edx_val = rbind(edx_val, edx_test, fill = TRUE)
+  print(u)
+}
+
+RMSE_m1 = RMSE(pred = edx_val$pred_m1, obs = edx_val$rating)
+
+print(RMSE_m1)
+```
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+
+KF = 10
+set.seed(2020-12-31, sample.kind = "Rounding")
+
+# ratings model for movie effects
+
+edx$movieId = as.factor(edx$movieId)
+edx_val_m2  = numeric()
+for(u in 1:KF){
+  xb <- mean(edx$rating)
+  m2_folds = edx %>% filter(id_cv != u) %>%
+    group_by(movieId) %>%
+    summarise(b_i = mean(rating - xb))
+  edx_test = edx %>% filter(id_cv == u)
+  edx_test$pred_m2 <- xb + edx_test %>%
+    left_join(m2_folds, by = "movieId") %>%
+    pull(b_i)
+  edx_val_m2 = rbind(edx_val_m2, edx_test, fill = TRUE)
+}
+
+edx_val_m2 = edx_val_m2[,c("userId", "movieId", "pred_m2")]
+edx_val_m2 = na.omit(edx_val_m2)
+
+edx_val  = left_join(edx_val, edx_val_m2, by = c("userId", "movieId"))
+
+RMSE_m2 = RMSE(pred = edx_val$pred_m2, obs = edx_val$rating, na.rm = TRUE)
+
+print(RMSE_m2)
+```
+
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+
+KF = 10
+set.seed(2020-12-31, sample.kind = "Rounding")
+
+# ratings model for movie effects
+
+edx$movieId = as.factor(edx$movieId)
+edx_val_m3  = numeric()
+for(u in 1:KF){
+  
+  xb <- mean(edx$rating)
+  m3_folds = edx %>% filter(id_cv != u) %>%
+    group_by(movieId) %>%
+    summarise(b_i = mean(rating - xb))
+  
+  m3_add_user_in_folds = edx %>% filter(id_cv != u) %>% left_join(m3_folds, "movieId") %>%
+    group_by(userId) %>% summarise(b_u = mean(rating - xb - b_i))
+  
+  edx_test = edx %>% filter(id_cv == u)
+  
+  edx_test$pred_m3 <- edx_test %>%
+    left_join(m3_folds, by = "movieId") %>%
+    left_join(m3_add_user_in_folds, by = "userId") %>%
+    mutate(rating_pred = xb + b_i + b_u) %>%
+    pull(rating_pred)
+  
+  edx_val_m3 = rbind(edx_val_m3, edx_test, fill = TRUE)
+  print(u)
+}
+
+edx_val_m3 = edx_val_m3[,c("userId", "movieId", "pred_m3")]
+edx_val_m3 = na.omit(edx_val_m3)
+edx_val    = edx_val[,-1]
+
+edx_val$userId    = as.character(edx_val$userId)
+edx_val_m3$userId = as.character(edx_val_m3$userId)
+
+edx_val$movieId    = as.character(edx_val$movieId)
+edx_val_m3$movieId = as.character(edx_val_m3$movieId)
+
+edx_val   = left_join(edx_val, edx_val_m3, by = c("userId", "movieId"))
+
+RMSE_m3 =RMSE(pred = edx_val$pred_m3, obs = edx_val$rating, na.rm = TRUE)
+
+print(RMSE_m3)
+
+```
 
 
