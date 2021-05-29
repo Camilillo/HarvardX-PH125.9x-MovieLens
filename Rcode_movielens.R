@@ -76,6 +76,8 @@ edx0 = edx
 
 # Response variable distribution
 
+dim(edx)
+
 fig1 <- edx %>% group_by(rating) %>% summarize(total = length(rating)) %>%
   ggplot(aes(x = rating, y = 100*total/(sum(total)))) +
   geom_bar(stat="identity", position=position_dodge(), width = 0.4, color = "black", fill = "orange") +
