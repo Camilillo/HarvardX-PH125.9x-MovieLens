@@ -11,10 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. Introduction
 
-The aims of this study is to create a movie recommendation system using the MovieLens dataset. The develop of the movieLens recommendation system consists of exploratory data analysis, formulation and, develop and machine learning models comparison on the rating of a user who watches a movie.
+The aims of this study is to create a movie recommendation system using the MovieLens dataset. The develop of the movieLens recommendation system consists in an exploratory data analysis, formulation and develop machine learning models on the rating of a user who watches a movie.
 
-This document is organized as follows: First, repeating codes on the training and test set available in the course. Second, exploratory data analysis. Third, formulation and evaluationof predictive models and, finally, conclusion.
-
+This document is organized as follows: First, we repeat the Rcodes to generate in the training and test set available in the course. Second, we develop an exploratory data analysis. Third, we formulated and evaluated four predictive models and finally concluded our work.
 
 ## 2. Playback of edx codes
 
@@ -86,7 +85,7 @@ Note that we add some packages in this step. In addition, we copy de edx data fr
 
 ## 3. Exploratory data analysis
 
-A continuación se presenta la variable de respuesta, denotada por Y, la cual corresponde al rating de la película proporcionada por el usuario. El soporte de la variable corresponde a los valores $i/2$, con $i = 1, 2, \ldots, 10$. La distribución es presentada a continuación:
+The response variable is presented below, denoted by $R$, which corresponds to the rating of the movie provided by the user. The support variable correspond to $a/2$ values, with $a = 1, 2, \ldots, 10$. The rating distribution is:
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 fig1 <- edx %>% group_by(rating) %>% summarize(total = length(rating)) %>%
@@ -102,17 +101,15 @@ fig1 <- edx %>% group_by(rating) %>% summarize(total = length(rating)) %>%
 fig1
 ```
 
-Note que la distribución es una mezcla de dos distirbuciones; ntergers and non-integers. La distirbución de ratings es asimétrica a la izquierda. El número total de datos es de 9,000,055. Note que es más probable pertenecer a la distribución de enteros respecto a los no-enteros, es probable que sea difícil de separar estas dos poblaciones al momento de modelar. Entonces, por ahora sólo se utilizará un moelo global. Es decir, no se intentará realizar algún tipo de algoritmo supervisado para separar estas dos distribuciones.
+Note that the rating distribution is a mixture of two distributions; the integers and non-integers distributions. The rating distribution have negative asymmetric. The total number of data 9,000,055. Note that it is more likely to belong to the integers distribution. These two populations are likely to be difficult to separate when modeling. Thus, we will model without considering clusters. 
 
-Un análisis interesante corresponde a observar la distribución del rating average by user. 
-
-Si asumimos que la distribución del rating de cada usuario, es posible considerar intervalos de confianza para el rating de cada usuario (denotados por $b_{u}$), dados por: 
+For other hand, an interesting analysis corresponds to observing the distribution of average rating by user. If we assume that the distribution of the rating of each user is Gaussian, it is possible to consider confidence intervals ($CI$) for the average rating of each user (denoted by $b_{u}$), denoted by:
 $$
 CI(b_{u})_{95\%} = \tilde{b}_{u} \pm 1.96\frac{\tilde{\sigma}_{u}}{\sqrt{n_{u}}},
 $$
-donde $\tilde{b}_{u}$ corresponde al rating promedio del usuario $u$, mientras que $\tilde{sigma}$ y $n_{u}$ corresponden a la desviación estándar del rating y número de películas que observó el usuario $u$.
+where $\tilde{b}_{u}$ is the average rating of the user $u$. In addition, $\tilde{\sigma}_{u}$ and $n_{u}$ are the estimated standard deviation of the rating by user and the number of movies that the user rated, respectively. 
 
-El siguiente plot corresponde a la distribución del rating promedio respecto al usuario y su respectivo intervalo de confianza del $95\%$ (userId variable). Para robustecer el análisis se utilizaron los usuarios que hayan visto al menos 100 películas.
+The following graph corresponds to the distribution of the average rating with respect to the user and its respective confidence interval of $95\%$ (userId variable). To robustness the analysis, users who had watched at least 100 movies were used.
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
@@ -138,7 +135,7 @@ fig2 = tab_userId %>% filter(len > 100) %>% ggplot(aes(rank)) +
 fig2
 ```
 
-Note que existen usuarios que aparentemente son diferentes que otros a la hora de evaluar. ¿Ocurrirá lo mismo cuando agrupados por película A continuación se presenta un análisis similar al anterior, pero agrupando por película.
+By observing the confidence intervals, it is possible to see that there is a significant difference between users. Will the same happen when grouped by movie? Below is a similar analysis to the previous one, but grouped by movie.
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
@@ -164,9 +161,9 @@ fig3
 
 ```
 
-Note que los resultados son bastante similares. Hay películas que poseen altos valores y son significativamente diferentes de otras películas con ratings más bajos.
+Note that results grouped by movies are similar to results grouped by user. It is possible to see that there is a significant difference between movies.
 
-A continuación se comparará la distribución del rating promedio del usuario respecto al rating promedio de la película, un plot de empirical cumulative distirbution function.
+The distribution of the average rating of users will be compared to the average rating of a movie, an empirical cumulative distribution function is graphed.
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
@@ -185,9 +182,9 @@ fig4
 
 ```
 
-Note que las distribuciones son diferentes. Primero, la distribución del rating promedio por usuario posee mayores estadísticos de tendencia central. Este análisis podría ser evidencia de interacción entre película y usuario, ya que al aislar el usuario, o la película, se obtienen distribuciones diferentes en tendencia y forma (por ejemplo, la asimetría de la distribución). Este tema lo abordaremos más adelante.
+Notice that the distributions are different. First, the distribution of the average rating per user has higher statistics of central tendency. This analysis could be evidence of interaction between movie and user, since when isolating the user, or the movie, different distributions in trend and shape are obtained (for example, the asymmetry of the distribution). We will address this later.
 
-Por otro lado, nosotros analizaremos dos aspectos asociados a la película. El año de estreno y el género de la película.
+On the other hand, we will analyze two aspects associated with the movie. The year of release and the genre of the movie.
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
@@ -234,13 +231,13 @@ fig6
 
 ```
 
-Se aprecia que tanto el año como el genero cambian el promedio de la distribución. Esto podría ser un indicio de que estas covariables podrían ser inputs de modelos predictivos para el rating.
+It can be seen that both the year and the gender change the average of the distribution. This could be an indication that these covariates could be inputs from the predictive model for the rating.
 
-No obsante de lo anterior, primero se provarán modelos numéricos clásicos relacionados a los sistemas de recomendaciones que sólo incluyen los efectos del usuario/película dentro de la formulación. A continuación se presentan estos modelos.
+However, the classical numerical models related to recommender systems that only include user/movie effects within the formulation will be tested first. These models are presented below.
 
 ## 4. Modeling
 
-En este trabajo nosotros abordamos los modelos mas usuales para sistemas de recomendación. Los cuales son presentados a continuación:
+In this work we will address the most common models of recommendation systems, based on Koren et al. (2009). Which are presented below:
 $$
 \text{m}_{1}:  r_{iu} = \mu + e_{iu},
 $$
@@ -253,13 +250,13 @@ $$
 $$
 \text{m}_{4}:  r_{iu} = \mu + b_{i} + b_{u} + q_{i}^{\top}p_{u} + e_{iu},
 $$
-donde $r_{iu}$ corresponde al rating de la $i$-th movie en el $u$-th user, $\mu$ es la media general, $b_{i}$ is the movie bias, $b_{u}$ is the user bias, el producto $q_{i}^{\top}p_{u}$ son vectores de parámetros que corresponden a la interacción usuarui/movie y $e_{iu}$ es el error aleatorio. 
+where $r_{iu}$ correspond to the rating of the $i$-th movie rated by the $u$-th user, $\mu$ is the global average, $b_{i}$ is the movie bias, $b_{u}$ is the user bias. In addition, $q_{i}$ and $p_{u}$ are parameter vectors that correspond to user/movie interaction. Finally, $e_{iu}$ is the random error, where $e_{iu} \sim N(0,1)$. 
 
-El modelo m$_{1}$ corresponde a un modelo de media global, m$_{2}$ corresponde a un modelo con movie effect, m$_{3}$ corresponds to a model with movie and user effects. Finally, m$_4$ adds the movie/user interaction to the above model.
+The m$_{1}$ model is a global average model, m$_{2}$ correspond to a movie effect model, m$_{3}$ is a movie and user effects model. Finally, m$_4$ adds the movie/user interaction to the above model.
 
-Para comparar la performance de estos modelos, nosotros utilizamos una validacion cruzada $K$-folds, con $K=10$, utilizando el package dismo. Esto nos permite comparar exactamente los mismos subsets (or folds) para cada molesto, permitiendo una comparación más justa entre los 4 modelos propuestos.
+To compare the performance of these models, we use a cross-validation $K$-folds, with $K=10$, using the `dismo` package. This allows us to compare exactly the same subsets (or folds) for each model, allowing a fairer comparison between the four proposed models.
 
-Acontinuación se presenta el código para el modelo m$_{1}$, m$_{2}$ y m$_{3}$:
+Below is the code for the models m$_{1}$, m$_{2}$ and m$_{3}$:
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
@@ -358,7 +355,7 @@ RMSE_m3 = RMSE(pred = edx_val$pred_m3, obs = edx_val$rating, na.rm = TRUE)
 
 ```
 
-Para el modelo m$_{4}$, nosotros utilizamos el package recosystem, el cual realiza una validación cruzada para determinar ciertos inputs que utiliza el modelo. Entonces realizaremos nuestra validación cruzada de la siguiente manera: (1) determinaremos los parámetros del m$_{4}$ para todo el conjunto edx. (2) utilizaremos los 10-folds determinados anteriormente para evaluar el setting del step (1) y comparar el RMSE con el resto de los modelos. Entonces, el siguiente Rcode presenta el tuning de parámetros (please not run, this takes too long).
+For the m$_{4}$ model, we use the `recosystem` package, which performs cross-validation to determine certain inputs that the model uses. Then we will do our cross validation as follows: (1) we will determine the parameters of m$_{4}$ for the entire edx set. (2) We will use the 10 previously determined folds to evaluate the configuration of step (1) and compare the RMSE with the rest of the models. So the following Rcode introduces the parameter setting (don't run it, this takes too long).
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 ## not run!
@@ -379,7 +376,7 @@ test_edx  <-  with(validation, data_memory(user_index = userId,
 
 ```
 
-El siguiente código proporciona la validación cruzada 10-folds.
+Once the parameters are determined. The following Rcode provides the 10-fold cross-validation evaluation used to compare the models in this work.
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
@@ -431,7 +428,7 @@ RMSE_m4 = RMSE(pred = edx_val$pred_m4, obs = edx_val$rating, na.rm = TRUE)
 
 ```
 
-Finalmente, tenemos la siguiente comparación de RMSE para seleccionar el mejor modelo
+Finally, we have the following RMSE comparison to select the best model:
 
 ```{r, echo = FALSE, results = 'asis'}
 
@@ -440,7 +437,7 @@ RMSE_m2 = 0.9436378
 RMSE_m3 = 0.8656021
 RMSE_m4 = 0.7882029
 
-A = t(c(RMSE_m1, RMSE_m2, RMSE_m3, RMSE_m4))
+A = t(round(c(RMSE_m1, RMSE_m2, RMSE_m3, RMSE_m4), 2))
 colnames(A) = c("Global average", "Movie effect", "Movie and user effects", "Movie and user effects and the interaction movie/user")
 
 rownames(A) = "RMSE"
@@ -449,6 +446,32 @@ knitr::kable(A, caption = "Cross validation 10-folds - performance comparison")
 ```
 
 
-El modelo con el RMSE más bajo consiste en el movie, user effects and interaction movie/user model. Entonces, utilizando este último modelo se realizará la predicción en el set de validación del curso. Tenemos el siguiente código:
+The model with the lowest RMSE consists of model m$_{4}$. Then, using this last model, the prediction will be made in the validation set of the course. We have the following code:
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+r$train(train_edx, opts = c(optim_par, nthread = 8, niter = 20))
+
+rating_pred_validation <-  r$predict(test_edx, out_memory())
+```
+
+Before evaluating the RMSE, we will make a small correction. The numerical model does not consider the prediction to be between 0.5 and 5. Then the following code corrects the high and low values and calculates the RMSE of the validation set.
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+rating_pred_validation2 = rating_pred_validation
+rating_pred_validation2[rating_pred_validation2 > 5.0] = 5.0
+rating_pred_validation2[rating_pred_validation2 < 0.5] = 0.5
+
+RMSE_val = RMSE(rating_pred_validation2, validation$rating)
+```
+
+The RMSE of the validation set is 0.78.
+
+## 5. Conclusion
+
+This work consists of generating a recommendation system for movieLens. Four classic models associated with recommender systems have been tested. A model based on global mean, user bias and movie bias, as well as their interaction, show better performance compared to RMSE, which is 0.78 in a validation set.
+
+In EDA, some variables such as the year the movie was released or the genre of the movie could be key to further increasing the performance of the model.
+
+## 6. References
+
+Koren, Y., Bell, R., and Volinsky, C. (2009). Matrix factorization techniques for recommender systems. \emph{Computer}, \textbf{42}(8), 30--37.

@@ -370,10 +370,7 @@ edx_val   = left_join(edx_val, edx_val_m4, by = c("userId", "movieId"))
 RMSE_m4 = RMSE(pred = edx_val$pred_m4, obs = edx_val$rating, na.rm = TRUE)
 
 
-
-
-
-# Train the model
+# Evaluate the test set with the final model
 r$train(train_edx, opts = c(optim_par, nthread = 8, niter = 20))
 
 rating_pred_validation <-  r$predict(test_edx, out_memory())
@@ -384,4 +381,5 @@ rating_pred_validation2 = rating_pred_validation
 rating_pred_validation2[rating_pred_validation2 > 5.0] = 5.0
 rating_pred_validation2[rating_pred_validation2 < 0.5] = 0.5
 
-RMSE(rating_pred_validation2, validation$rating)
+RMSE_val = RMSE(rating_pred_validation2, validation$rating)
+print(RMSE_val)
