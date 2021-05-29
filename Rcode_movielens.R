@@ -205,14 +205,14 @@ fig6
 
 ## mu IC 95% grouped by genres
 
-fig7 = tab_genres %>% filter((genres != "IMAX")&(genres != "(no genres listed)")) %>% ggplot(aes(x=reorder(genres, -avg), y=avg)) +
-  geom_line(aes(y=avg, group = 1), col="darkgreen") +
-  geom_point(aes(y=avg, group = 1), col="black") +
-  geom_errorbar(aes(ymin=avg-(1.96*sds/sqrt(len)), ymax=avg+(1.96*sds/sqrt(len))), width=.2,
-                position=position_dodge(0.05)) +
-  labs(title="", x = "", y = "ratings") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-fig7
+# fig7 = tab_genres %>% filter((genres != "IMAX")&(genres != "(no genres listed)")) %>% ggplot(aes(x=reorder(genres, -avg), y=avg)) +
+#   geom_line(aes(y=avg, group = 1), col="darkgreen") +
+#   geom_point(aes(y=avg, group = 1), col="black") +
+#   geom_errorbar(aes(ymin=avg-(1.96*sds/sqrt(len)), ymax=avg+(1.96*sds/sqrt(len))), width=.2,
+#                 position=position_dodge(0.05)) +
+#   labs(title="", x = "", y = "ratings") +
+#   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+# fig7
 
 ##########################################################
 # Model
@@ -234,10 +234,9 @@ for(u in 1:KF){
   edx_test$pred_m1 = m1_folds
   
   edx_val = rbind(edx_val, edx_test, fill = TRUE)
-  print(u)
 }
 
-RMSE(pred = edx_val$pred_m1, obs = edx_val$rating)
+RMSE_m1 = RMSE(pred = edx_val$pred_m1, obs = edx_val$rating)
 
 # ratings model for movie effects
 
@@ -257,11 +256,12 @@ for(u in 1:KF){
 
 edx_val_m2 = edx_val_m2[,c("userId", "movieId", "pred_m2")]
 edx_val_m2 = na.omit(edx_val_m2)
+edx_val_m2$movieId = as.numeric(as.character(edx_val_m2$movieId))
 
+edx_val  = edx_val[,-1]
 edx_val  = left_join(edx_val, edx_val_m2, by = c("userId", "movieId"))
 
-RMSE(pred = edx_val$pred_m2, obs = edx_val$rating, na.rm = TRUE)
-
+RMSE_m2 = RMSE(pred = edx_val$pred_m2, obs = edx_val$rating, na.rm = TRUE)
 
 # add user effect
 
@@ -286,12 +286,10 @@ for(u in 1:KF){
     pull(rating_pred)
   
   edx_val_m3 = rbind(edx_val_m3, edx_test, fill = TRUE)
-  print(u)
 }
 
 edx_val_m3 = edx_val_m3[,c("userId", "movieId", "pred_m3")]
 edx_val_m3 = na.omit(edx_val_m3)
-edx_val    = edx_val[,-1]
 
 edx_val$userId    = as.character(edx_val$userId)
 edx_val_m3$userId = as.character(edx_val_m3$userId)
@@ -300,44 +298,90 @@ edx_val$movieId    = as.character(edx_val$movieId)
 edx_val_m3$movieId = as.character(edx_val_m3$movieId)
 
 edx_val   = left_join(edx_val, edx_val_m3, by = c("userId", "movieId"))
-RMSE(pred = edx_val$pred_m3, obs = edx_val$rating, na.rm = TRUE)
+RMSE_m3 = RMSE(pred = edx_val$pred_m3, obs = edx_val$rating, na.rm = TRUE)
 
 # these model can be better by the next model
 
 
 
 
-
+## not run!
 set.seed(2021-05-28, sample.kind = "Rounding")
 
-# Convert 'edx' and 'validation' sets to recosystem input format
-edx_reco <-  with(edx0, data_memory(user_index = userId,
+train_edx <-  with(edx0, data_memory(user_index = userId,
                                     item_index = movieId,
                                     rating = rating))
-validation_reco  <-  with(validation, data_memory(user_index = userId,
+test_edx  <-  with(validation, data_memory(user_index = userId,
                                                   item_index = movieId,
                                                   rating = rating))
+# r    =  recosystem::Reco()
+# opts =  r$tune(train_edx, opts = list(dim = c(20, 30, 40),
+#                                       lrate = seq(0.025, 0.1, 0.025),
+#                                       costp_l2 = c(0.05, 0.075, 0.1),
+#                                       costq_l2 = c(0.001, 0.005, 0.01, 0.015),
+#                                       nthread  = 8, niter = 10))
 
-# Create the model object
-r <-  recosystem::Reco()
 
-# Tune the parameters
-opts <-  r$tune(edx_reco, opts = list(dim = 30, #c(20, 30, 40)
-                                      lrate = 0.05, # seq(0.025, 0.1, 0.025)
-                                      costp_l2 = c(0.05, 0.075, 0.1),
-                                      costq_l2 = c(0.001, 0.005, 0.01, 0.015),
-                                      nthread  = 8, niter = 10))
-opts$min
+
+optim_par = list()
+optim_par[["dim"]]      = 30
+optim_par[["costp_l1"]] = 0
+optim_par[["costp_l2"]] = 0.075
+optim_par[["costq_l1"]] = 0
+optim_par[["costq_l2"]] = 0.015
+optim_par[["lrate"]]    = 0.05
+optim_par[["loss_fun"]] = 0.7987279
+
+edx$movieId = as.factor(edx$movieId)
+edx_val_m4  = numeric()
+for(u in 1:KF){
+  
+  m4_folds = edx %>% filter(id_cv != u) 
+  edx_test = edx %>% filter(id_cv == u)
+  
+  mfold <-  with(m4_folds, data_memory(user_index = userId,
+                                      item_index = movieId,
+                                      rating = rating))
+  tfold  <-  with(edx_test, data_memory(user_index = userId,
+                                        item_index = movieId,
+                                        rating = rating))
+  r    =  recosystem::Reco()
+  r$train(mfold, opts = c(optim_par, nthread = 8, niter = 20))
+  
+  pred_rating_folds <-  r$predict(tfold, out_memory())
+  
+  edx_test$pred_m4 = pred_rating_folds
+  
+  edx_val_m4 = rbind(edx_val_m4, 
+                     edx_test[,c("userId", "movieId", "pred_m4")], 
+                     fill = TRUE)
+  
+}
+
+edx_val_m4 = edx_val_m4[,-1]
+
+edx_val$userId    = as.character(edx_val$userId)
+edx_val_m4$userId = as.character(edx_val_m4$userId)
+
+edx_val$movieId    = as.character(edx_val$movieId)
+edx_val_m4$movieId = as.character(edx_val_m4$movieId)
+
+edx_val   = left_join(edx_val, edx_val_m4, by = c("userId", "movieId"))
+RMSE_m4 = RMSE(pred = edx_val$pred_m4, obs = edx_val$rating, na.rm = TRUE)
+
+
+
+
+
 # Train the model
-r$train(edx_reco, opts = c(opts$min, nthread = 8, niter = 20))
+r$train(train_edx, opts = c(optim_par, nthread = 8, niter = 20))
 
-# Calculate the prediction
-y_hat_final_reco <-  r$predict(validation_reco, out_memory())
+rating_pred_validation <-  r$predict(test_edx, out_memory())
 
-RMSE(y_hat_final_reco, validation$rating)
+RMSE_validation = RMSE(rating_pred_validation, validation$rating)
 
-y_hat_final_reco2 = y_hat_final_reco
-y_hat_final_reco2[y_hat_final_reco2 > 5.0] = 5.0
-y_hat_final_reco2[y_hat_final_reco2 < 0.5] = 0.5
+rating_pred_validation2 = rating_pred_validation
+rating_pred_validation2[rating_pred_validation2 > 5.0] = 5.0
+rating_pred_validation2[rating_pred_validation2 < 0.5] = 0.5
 
-RMSE(y_hat_final_reco2, validation$rating)
+RMSE(rating_pred_validation2, validation$rating)

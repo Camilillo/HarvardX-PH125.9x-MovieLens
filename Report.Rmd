@@ -1,5 +1,5 @@
 ---
-title: "Harvard-PH125.9x - MovieLens project"
+title: "Harvard-PH125.9x - MovieLens Report"
 author: "Camilo Lillo" 
 date: "29/5/2021"
 output: pdf_document
@@ -20,7 +20,7 @@ This document is organized as follows: First, repeating codes on the training an
 
 Below are the exd codes:
 
- ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+ ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
 if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
 if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
@@ -88,7 +88,7 @@ Note that we add some packages in this step. In addition, we copy de edx data fr
 
 A continuación se presenta la variable de respuesta, denotada por Y, la cual corresponde al rating de la película proporcionada por el usuario. El soporte de la variable corresponde a los valores $i/2$, con $i = 1, 2, \ldots, 10$. La distribución es presentada a continuación:
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 fig1 <- edx %>% group_by(rating) %>% summarize(total = length(rating)) %>%
   ggplot(aes(x = rating, y = 100*total/(sum(total)))) +
   geom_bar(stat="identity", 
@@ -114,7 +114,7 @@ donde $\tilde{b}_{u}$ corresponde al rating promedio del usuario $u$, mientras q
 
 El siguiente plot corresponde a la distribución del rating promedio respecto al usuario y su respectivo intervalo de confianza del $95\%$ (userId variable). Para robustecer el análisis se utilizaron los usuarios que hayan visto al menos 100 películas.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
 tab_userId = edx %>% group_by(userId) %>%
   summarize(avg = mean(rating),
@@ -140,7 +140,7 @@ fig2
 
 Note que existen usuarios que aparentemente son diferentes que otros a la hora de evaluar. ¿Ocurrirá lo mismo cuando agrupados por película A continuación se presenta un análisis similar al anterior, pero agrupando por película.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
 tab_movieId = edx %>% group_by(title) %>%
   summarize(avg = mean(rating),
@@ -168,7 +168,7 @@ Note que los resultados son bastante similares. Hay películas que poseen altos 
 
 A continuación se comparará la distribución del rating promedio del usuario respecto al rating promedio de la película, un plot de empirical cumulative distirbution function.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
 tab_userId  =  tab_userId[order(tab_userId$avg),]
 tab_movieId = tab_movieId[order(tab_movieId$avg),]
@@ -189,7 +189,7 @@ Note que las distribuciones son diferentes. Primero, la distribución del rating
 
 Por otro lado, nosotros analizaremos dos aspectos asociados a la película. El año de estreno y el género de la película.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
 edx$year = as.numeric(stri_reverse(substr(stri_reverse(edx$title), 2, 5)))
 edx = edx %>% mutate(year = ifelse(year < 1980, "< 1980", year))
@@ -212,7 +212,7 @@ fig5.2
 ```
 
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
 tab_genres = edx %>% separate_rows(genres, sep = "\\|") %>%
   group_by(genres) %>%
@@ -259,15 +259,12 @@ El modelo m$_{1}$ corresponde a un modelo de media global, m$_{2}$ corresponde a
 
 Para comparar la performance de estos modelos, nosotros utilizamos una validacion cruzada $K$-folds, con $K=10$, utilizando el package dismo. Esto nos permite comparar exactamente los mismos subsets (or folds) para cada molesto, permitiendo una comparación más justa entre los 4 modelos propuestos.
 
-Acontinuación se presenta el código para el modelo m$_{1}$, m$_{2}$, m$_{3}$ and m$_{4}$:
+Acontinuación se presenta el código para el modelo m$_{1}$, m$_{2}$ y m$_{3}$:
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
 KF = 10
 set.seed(2020-12-31, sample.kind = "Rounding")
-
-# ratings model for global average
-
 edx$id_cv = kfold(1:NROW(edx), k = KF)
 edx_val   = numeric()
 for(u in 1:KF){
@@ -279,15 +276,13 @@ for(u in 1:KF){
   edx_test$pred_m1 = m1_folds
   
   edx_val = rbind(edx_val, edx_test, fill = TRUE)
-  print(u)
 }
 
 RMSE_m1 = RMSE(pred = edx_val$pred_m1, obs = edx_val$rating)
 
-print(RMSE_m1)
 ```
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
 KF = 10
 set.seed(2020-12-31, sample.kind = "Rounding")
@@ -310,21 +305,21 @@ for(u in 1:KF){
 
 edx_val_m2 = edx_val_m2[,c("userId", "movieId", "pred_m2")]
 edx_val_m2 = na.omit(edx_val_m2)
+edx_val_m2$movieId = as.numeric(as.character(edx_val_m2$movieId))
 
+edx_val  = edx_val[,-1]
 edx_val  = left_join(edx_val, edx_val_m2, by = c("userId", "movieId"))
 
 RMSE_m2 = RMSE(pred = edx_val$pred_m2, obs = edx_val$rating, na.rm = TRUE)
-
-print(RMSE_m2)
 ```
 
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
 
 KF = 10
 set.seed(2020-12-31, sample.kind = "Rounding")
 
-# ratings model for movie effects
+# add user effect
 
 edx$movieId = as.factor(edx$movieId)
 edx_val_m3  = numeric()
@@ -347,12 +342,10 @@ for(u in 1:KF){
     pull(rating_pred)
   
   edx_val_m3 = rbind(edx_val_m3, edx_test, fill = TRUE)
-  print(u)
 }
 
 edx_val_m3 = edx_val_m3[,c("userId", "movieId", "pred_m3")]
 edx_val_m3 = na.omit(edx_val_m3)
-edx_val    = edx_val[,-1]
 
 edx_val$userId    = as.character(edx_val$userId)
 edx_val_m3$userId = as.character(edx_val_m3$userId)
@@ -361,11 +354,101 @@ edx_val$movieId    = as.character(edx_val$movieId)
 edx_val_m3$movieId = as.character(edx_val_m3$movieId)
 
 edx_val   = left_join(edx_val, edx_val_m3, by = c("userId", "movieId"))
-
-RMSE_m3 =RMSE(pred = edx_val$pred_m3, obs = edx_val$rating, na.rm = TRUE)
-
-print(RMSE_m3)
+RMSE_m3 = RMSE(pred = edx_val$pred_m3, obs = edx_val$rating, na.rm = TRUE)
 
 ```
 
+Para el modelo m$_{4}$, nosotros utilizamos el package recosystem, el cual realiza una validación cruzada para determinar ciertos inputs que utiliza el modelo. Entonces realizaremos nuestra validación cruzada de la siguiente manera: (1) determinaremos los parámetros del m$_{4}$ para todo el conjunto edx. (2) utilizaremos los 10-folds determinados anteriormente para evaluar el setting del step (1) y comparar el RMSE con el resto de los modelos. Entonces, el siguiente Rcode presenta el tuning de parámetros (please not run, this takes too long).
 
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+## not run!
+set.seed(2021-05-28, sample.kind = "Rounding")
+
+train_edx <-  with(edx0, data_memory(user_index = userId,
+                                    item_index = movieId,
+                                    rating = rating))
+test_edx  <-  with(validation, data_memory(user_index = userId,
+                                                  item_index = movieId,
+                                                  rating = rating))
+# r    =  recosystem::Reco()
+# opts =  r$tune(train_edx, opts = list(dim = c(20, 30, 40),
+#                                       lrate = seq(0.025, 0.1, 0.025),
+#                                       costp_l2 = c(0.05, 0.075, 0.1),
+#                                       costq_l2 = c(0.001, 0.005, 0.01, 0.015),
+#                                       nthread  = 8, niter = 10))
+
+```
+
+El siguiente código proporciona la validación cruzada 10-folds.
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+
+optim_par = list()
+optim_par[["dim"]]      = 30
+optim_par[["costp_l1"]] = 0
+optim_par[["costp_l2"]] = 0.075
+optim_par[["costq_l1"]] = 0
+optim_par[["costq_l2"]] = 0.015
+optim_par[["lrate"]]    = 0.05
+optim_par[["loss_fun"]] = 0.7987279
+
+edx$movieId = as.factor(edx$movieId)
+edx_val_m4  = numeric()
+for(u in 1:KF){
+  
+  m4_folds = edx %>% filter(id_cv != u) 
+  edx_test = edx %>% filter(id_cv == u)
+  
+  mfold <-  with(m4_folds, data_memory(user_index = userId,
+                                      item_index = movieId,
+                                      rating = rating))
+  tfold  <-  with(edx_test, data_memory(user_index = userId,
+                                        item_index = movieId,
+                                        rating = rating))
+  r    =  recosystem::Reco()
+  r$train(mfold, opts = c(optim_par, nthread = 8, niter = 20))
+  
+  pred_rating_folds <-  r$predict(tfold, out_memory())
+  
+  edx_test$pred_m4 = pred_rating_folds
+  
+  edx_val_m4 = rbind(edx_val_m4, 
+                     edx_test[,c("userId", "movieId", "pred_m4")], 
+                     fill = TRUE)
+  
+}
+
+edx_val_m4 = edx_val_m4[,-1]
+
+edx_val$userId    = as.character(edx_val$userId)
+edx_val_m4$userId = as.character(edx_val_m4$userId)
+
+edx_val$movieId    = as.character(edx_val$movieId)
+edx_val_m4$movieId = as.character(edx_val_m4$movieId)
+
+edx_val   = left_join(edx_val, edx_val_m4, by = c("userId", "movieId"))
+RMSE_m4 = RMSE(pred = edx_val$pred_m4, obs = edx_val$rating, na.rm = TRUE)
+
+```
+
+Finalmente, tenemos la siguiente comparación de RMSE para seleccionar el mejor modelo
+
+```{r, echo = FALSE, results = 'asis'}
+
+RMSE_m1 = 1.060332
+RMSE_m2 = 0.9436378
+RMSE_m3 = 0.8656021
+RMSE_m4 = 0.7882029
+
+A = t(c(RMSE_m1, RMSE_m2, RMSE_m3, RMSE_m4))
+colnames(A) = c("Global average", "Movie effect", "Movie and user effects", "Movie and user effects and the interaction movie/user")
+
+rownames(A) = "RMSE"
+
+knitr::kable(A, caption = "Cross validation 10-folds - performance comparison")
+```
+
+
+El modelo con el RMSE más bajo consiste en el movie, user effects and interaction movie/user model. Entonces, utilizando este último modelo se realizará la predicción en el set de validación del curso. Tenemos el siguiente código:
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
