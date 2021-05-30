@@ -1,5 +1,5 @@
 ---
-title: "Harvard-PH125.9x - MovieLens Report"
+title: "HarvardX-PH125.9x - MovieLens Report"
 author: "Camilo Lillo" 
 date: "29/5/2021"
 output: pdf_document
@@ -15,21 +15,30 @@ The aims of this study is to create a movie recommendation system using the Movi
 
 This document is organized as follows: First, we repeat the Rcodes to generate in the training and test set available in the course. Second, we develop an exploratory data analysis. Third, we formulated and evaluated four predictive models and finally concluded our work.
 
-## 2. Playback of edx codes
+## 2. Playback of edx Rcodes
 
-Below are the exd codes:
+Below are the exd Rcodes:
 
- ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
-if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
-if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
-if(!require(data.table)) install.packages("data.table", repos = "http://cran.us.r-project.org")
-if(!require(ggplot2)) install.packages("ggplot2", repos = "http://cran.us.r-project.org")
-if(!require(stringi)) install.packages("stringi", repos = "http://cran.us.r-project.org")
-if(!require(scales)) install.packages("scales", repos = "http://cran.us.r-project.org")
-if(!require(dismo)) install.packages("dismo", repos = "http://cran.us.r-project.org")
-if(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
-if(!require(recosystem)) install.packages("recosystem", repos = "http://cran.us.r-project.org")
-
+ ```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+if(!require(tidyverse)){
+   install.packages("tidyverse",  repos = "http://cran.us.r-project.org")}
+if(!require(caret)){ 
+   install.packages("caret",      repos = "http://cran.us.r-project.org")}
+if(!require(data.table)){ 
+   install.packages("data.table", repos = "http://cran.us.r-project.org")}
+if(!require(ggplot2)){
+   install.packages("ggplot2",    repos = "http://cran.us.r-project.org")} 
+if(!require(stringi)){
+   install.packages("stringi",    repos = "http://cran.us.r-project.org")} 
+if(!require(scales)){
+   install.packages("scales",     repos = "http://cran.us.r-project.org")}
+if(!require(dismo)){
+   install.packages("dismo",      repos = "http://cran.us.r-project.org")}
+if(!require(dplyr)){
+   install.packages("dplyr",      repos = "http://cran.us.r-project.org")}
+if(!require(recosystem)){
+   install.packages("recosystem", repos = "http://cran.us.r-project.org")}
+   
 library(tidyverse)
 library(caret)
 library(data.table)
@@ -87,7 +96,7 @@ Note that we add some packages in this step. In addition, we copy de edx data fr
 
 The response variable is presented below, denoted by $R$, which corresponds to the rating of the movie provided by the user. The support variable correspond to $a/2$ values, with $a = 1, 2, \ldots, 10$. The rating distribution is:
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 fig1 <- edx %>% group_by(rating) %>% summarize(total = length(rating)) %>%
   ggplot(aes(x = rating, y = 100*total/(sum(total)))) +
   geom_bar(stat="identity", 
@@ -111,7 +120,7 @@ where $\tilde{b}_{u}$ is the average rating of the user $u$. In addition, $\tild
 
 The following graph corresponds to the distribution of the average rating with respect to the user and its respective confidence interval of $95\%$ (userId variable). To robustness the analysis, users who had watched at least 100 movies were used.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 
 tab_userId = edx %>% group_by(userId) %>%
   summarize(avg = mean(rating),
@@ -137,7 +146,7 @@ fig2
 
 By observing the confidence intervals, it is possible to see that there is a significant difference between users. Will the same happen when grouped by movie? Below is a similar analysis to the previous one, but grouped by movie.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 
 tab_movieId = edx %>% group_by(title) %>%
   summarize(avg = mean(rating),
@@ -165,7 +174,7 @@ Note that results grouped by movies are similar to results grouped by user. It i
 
 The distribution of the average rating of users will be compared to the average rating of a movie, an empirical cumulative distribution function is graphed.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 
 tab_userId  =  tab_userId[order(tab_userId$avg),]
 tab_movieId = tab_movieId[order(tab_movieId$avg),]
@@ -186,7 +195,7 @@ Notice that the distributions are different. First, the distribution of the aver
 
 On the other hand, we will analyze two aspects associated with the movie. The year of release and the genre of the movie.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 
 edx$year = as.numeric(stri_reverse(substr(stri_reverse(edx$title), 2, 5)))
 edx = edx %>% mutate(year = ifelse(year < 1980, "< 1980", year))
@@ -209,7 +218,7 @@ fig5.2
 ```
 
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 
 tab_genres = edx %>% separate_rows(genres, sep = "\\|") %>%
   group_by(genres) %>%
@@ -248,17 +257,25 @@ $$
 \text{m}_{3}:  r_{iu} = \mu + b_{i} + b_{u} + e_{iu},
 $$
 $$
-\text{m}_{4}:  r_{iu} = \mu + b_{i} + b_{u} + q_{i}^{\top}p_{u} + e_{iu},
+\text{m}_{4}:  r_{iu} = \textbf{q}_{i}^{\top}\textbf{p}_{u} + e_{iu},
 $$
-where $r_{iu}$ correspond to the rating of the $i$-th movie rated by the $u$-th user, $\mu$ is the global average, $b_{i}$ is the movie bias, $b_{u}$ is the user bias. In addition, $q_{i}$ and $p_{u}$ are parameter vectors that correspond to user/movie interaction. Finally, $e_{iu}$ is the random error, where $e_{iu} \sim N(0,1)$. 
+where $r_{iu}$ correspond to the rating of the $i$-th movie rated by the $u$-th user, $\mu$ is the global average, $b_{i}$ is the movie bias, $b_{u}$ is the user bias. In addition, $\textbf{q}_{i}$ and $\text{p}_{u}$ are parameter vectors that correspond to user/movie interaction. Finally, $e_{iu}$ is the random error, where $e_{iu} \sim N(0,1)$. 
 
-The m$_{1}$ model is a global average model, m$_{2}$ correspond to a movie effect model, m$_{3}$ is a movie and user effects model. Finally, m$_4$ adds the movie/user interaction to the above model.
+The m$_{1}$ model is a global average model, m$_{2}$ correspond to a movie effect model, m$_{3}$ is a movie and user effects model. Finally, m$_4$ adds the movie/user interaction to the model formulation. We will not go into the details about the inputs of the m$_{4}$ model; for more details, see Chin et. al (2015).
 
-To compare the performance of these models, we use a cross-validation $K$-folds, with $K=10$, using the `dismo` package. This allows us to compare exactly the same subsets (or folds) for each model, allowing a fairer comparison between the four proposed models.
 
-Below is the code for the models m$_{1}$, m$_{2}$ and m$_{3}$:
+In order to compare the performance of these models, we use a cross-validation $K$-folds, with $K=10$, using the `dismo` package. This allows us to compare exactly the same subsets (or folds) for each model, allowing a fairer comparison between the four proposed models.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+The root mean square error ($RMSE$) will be used to make the comparison. The $RMSE$ is given by:
+$$
+RMSE = \sqrt{ \sum_{u,i}(\hat{r}_{ui} - r_{ui})^2/n },
+$$
+where, $\hat{r}_{ui}$ correspond to the predicted rating value of a movie $i$ rated by an $u$ user.
+
+
+Below is the Rcode for the models m$_{1}$, m$_{2}$ and m$_{3}$:
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 
 KF = 10
 set.seed(2020-12-31, sample.kind = "Rounding")
@@ -276,10 +293,10 @@ for(u in 1:KF){
 }
 
 RMSE_m1 = RMSE(pred = edx_val$pred_m1, obs = edx_val$rating)
-
+print(RMSE_m1)
 ```
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 
 KF = 10
 set.seed(2020-12-31, sample.kind = "Rounding")
@@ -308,10 +325,11 @@ edx_val  = edx_val[,-1]
 edx_val  = left_join(edx_val, edx_val_m2, by = c("userId", "movieId"))
 
 RMSE_m2 = RMSE(pred = edx_val$pred_m2, obs = edx_val$rating, na.rm = TRUE)
+print(RMSE_m2)
 ```
 
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 
 KF = 10
 set.seed(2020-12-31, sample.kind = "Rounding")
@@ -352,12 +370,12 @@ edx_val_m3$movieId = as.character(edx_val_m3$movieId)
 
 edx_val   = left_join(edx_val, edx_val_m3, by = c("userId", "movieId"))
 RMSE_m3 = RMSE(pred = edx_val$pred_m3, obs = edx_val$rating, na.rm = TRUE)
-
+print(RMSE_m3)
 ```
 
 For the m$_{4}$ model, we use the `recosystem` package, which performs cross-validation to determine certain inputs that the model uses. Then we will do our cross validation as follows: (1) we will determine the parameters of m$_{4}$ for the entire edx set. (2) We will use the 10 previously determined folds to evaluate the configuration of step (1) and compare the RMSE with the rest of the models. So the following Rcode introduces the parameter setting (don't run it, this takes too long).
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 ## not run!
 set.seed(2021-05-28, sample.kind = "Rounding")
 
@@ -378,7 +396,7 @@ test_edx  <-  with(validation, data_memory(user_index = userId,
 
 Once the parameters are determined. The following Rcode provides the 10-fold cross-validation evaluation used to compare the models in this work.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 
 optim_par = list()
 optim_par[["dim"]]      = 30
@@ -403,7 +421,7 @@ for(u in 1:KF){
                                         item_index = movieId,
                                         rating = rating))
   r    =  recosystem::Reco()
-  r$train(mfold, opts = c(optim_par, nthread = 8, niter = 20))
+  r$train(mfold, opts = c(optim_par, nthread = 8, niter = 20, verbose = FALSE))
   
   pred_rating_folds <-  r$predict(tfold, out_memory())
   
@@ -425,7 +443,7 @@ edx_val_m4$movieId = as.character(edx_val_m4$movieId)
 
 edx_val   = left_join(edx_val, edx_val_m4, by = c("userId", "movieId"))
 RMSE_m4 = RMSE(pred = edx_val$pred_m4, obs = edx_val$rating, na.rm = TRUE)
-
+print(RMSE_m4)
 ```
 
 Finally, we have the following RMSE comparison to select the best model:
@@ -446,22 +464,24 @@ knitr::kable(A, caption = "Cross validation 10-folds - performance comparison")
 ```
 
 
-The model with the lowest RMSE consists of model m$_{4}$. Then, using this last model, the prediction will be made in the validation set of the course. We have the following code:
+The model with the lowest RMSE consists of model m$_{4}$. Then, using this last model, the prediction will be made in the validation set of the course. We have the following Rcode:
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
-r$train(train_edx, opts = c(optim_par, nthread = 8, niter = 20))
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
+r    =  recosystem::Reco()
+r$train(train_edx, opts = c(optim_par, nthread = 8, niter = 20, verbose = FALSE))
 
 rating_pred_validation <-  r$predict(test_edx, out_memory())
 ```
 
-Before evaluating the RMSE, we will make a small correction. The numerical model does not consider the prediction to be between 0.5 and 5. Then the following code corrects the high and low values and calculates the RMSE of the validation set.
+Before evaluating the RMSE, we will make a small correction. The numerical model does not consider the prediction to be between 0.5 and 5. Then the following Rcode corrects the high and low values and calculates the RMSE of the validation set.
 
-```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE}
 rating_pred_validation2 = rating_pred_validation
 rating_pred_validation2[rating_pred_validation2 > 5.0] = 5.0
 rating_pred_validation2[rating_pred_validation2 < 0.5] = 0.5
 
 RMSE_val = RMSE(rating_pred_validation2, validation$rating)
+print(RMSE_val)
 ```
 
 The RMSE of the validation set is 0.78.
@@ -473,5 +493,7 @@ This work consists of generating a recommendation system for movieLens. Four cla
 In EDA, some variables such as the year the movie was released or the genre of the movie could be key to further increasing the performance of the model.
 
 ## 6. References
+
+Chin, W. S., Zhuang, Y., Juan, Y. C., and Lin, C. J. (2015, May). \emph{A learning-rate schedule for stochastic gradient methods to matrix factorization}. In Pacific-Asia Conference on Knowledge Discovery and Data Mining (pp. 442--455). Springer, Cham.
 
 Koren, Y., Bell, R., and Volinsky, C. (2009). Matrix factorization techniques for recommender systems. \emph{Computer}, \textbf{42}(8), 30--37.

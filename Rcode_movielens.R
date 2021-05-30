@@ -346,7 +346,7 @@ for(u in 1:KF){
                                         item_index = movieId,
                                         rating = rating))
   r    =  recosystem::Reco()
-  r$train(mfold, opts = c(optim_par, nthread = 8, niter = 20))
+  r$train(mfold, opts = c(optim_par, nthread = 8, niter = 20), verbose = FALSE)
   
   pred_rating_folds <-  r$predict(tfold, out_memory())
   
@@ -371,7 +371,7 @@ RMSE_m4 = RMSE(pred = edx_val$pred_m4, obs = edx_val$rating, na.rm = TRUE)
 
 
 # Evaluate the test set with the final model
-r$train(train_edx, opts = c(optim_par, nthread = 8, niter = 20))
+r$train(train_edx, opts = c(optim_par, nthread = 8, niter = 20), verbose = FALSE)
 
 rating_pred_validation <-  r$predict(test_edx, out_memory())
 
